@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ValidationError } from "@/server/errors";
+import { ValidationError } from "../../server/errors";
 import { errorJsonResponse, readJsonObject } from "./route-utils";
 
 describe("readJsonObject", () => {

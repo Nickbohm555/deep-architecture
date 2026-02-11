@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHttpError } from "@/server/errors";
+import { getHttpError } from "../../server/errors";
 
 export async function readJsonObject(request: Request): Promise<Record<string, unknown>> {
   const parsed = await request.json().catch(() => null);
