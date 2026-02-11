@@ -20,7 +20,7 @@ export type GraphOutput = {
 };
 
 export const graphJsonSchema = {
-  name: "architecture_graph",
+  name: "architecture_graph_v1",
   strict: true,
   schema: {
     type: "object",

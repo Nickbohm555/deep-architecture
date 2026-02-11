@@ -9,6 +9,7 @@ import { graphJsonSchema, GraphOutput } from "./graph-schema";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+const SCHEMA_NAME = graphJsonSchema.name;
 
 async function updateGraphStatus(graphId: string, status: string, error?: string) {
   await pool.query(
@@ -132,6 +133,7 @@ async function analyzeRepo({ repoUrl, projectId, graphId }: { repoUrl: string; p
 }
 
 async function main() {
+  console.log(`Starting worker with schema: ${SCHEMA_NAME}`);
   await ensureQueue("ingest-repo");
 
   await boss.work("ingest-repo", async (job) => {
