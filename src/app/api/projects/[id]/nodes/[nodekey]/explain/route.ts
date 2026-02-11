@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHttpError } from "@/server/errors";
+import { errorJsonResponse, readJsonObject } from "@/app/api/route-utils";
 import { enqueueNodeExplanation } from "@/server/services/node-explanations-service";
 
 export const runtime = "nodejs";
@@ -8,7 +8,7 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string; nodekey: string } }
 ) {
-  const body = await req.json().catch(() => ({}));
+  const body = await readJsonObject(req);
   const question = typeof body.question === "string" ? body.question : undefined;
 
   try {
@@ -19,10 +19,6 @@ export async function POST(
     });
     return NextResponse.json(result);
   } catch (error) {
-    const httpError = getHttpError(error, "Failed to enqueue explanation");
-    return NextResponse.json(
-      { error: httpError.error, code: httpError.code },
-      { status: httpError.status }
-    );
+    return errorJsonResponse(error, "Failed to enqueue explanation");
   }
 }

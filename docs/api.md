@@ -23,3 +23,8 @@
 - `PUT /api/projects/:id/nodes/:nodekey/explanation`
   - Body: `{ explanation: string }`
   - Saves edited explanation text.
+
+## Notes
+
+- Error payload shape remains `{ error: string, code: string }` for handled failures.
+- Invalid or non-object JSON bodies are treated as empty objects by route helpers.

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHttpError } from "@/server/errors";
+import { errorJsonResponse, readJsonObject } from "@/app/api/route-utils";
 import {
   getNodeExplanationDetail,
   saveNodeExplanation
@@ -19,7 +19,7 @@ export async function PUT(
   req: Request,
   { params }: { params: { id: string; nodekey: string } }
 ) {
-  const body = await req.json().catch(() => ({}));
+  const body = await readJsonObject(req);
   const explanation = typeof body.explanation === "string" ? body.explanation : "";
 
   try {
@@ -30,10 +30,6 @@ export async function PUT(
     });
     return NextResponse.json(saved);
   } catch (error) {
-    const httpError = getHttpError(error, "Failed to save explanation");
-    return NextResponse.json(
-      { error: httpError.error, code: httpError.code },
-      { status: httpError.status }
-    );
+    return errorJsonResponse(error, "Failed to save explanation");
   }
 }
