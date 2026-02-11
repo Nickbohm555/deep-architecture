@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "build:worker": "tsc -p tsconfig.worker.json",
-    "worker": "pnpm build:worker && node .tsbuild/worker.js",
-    "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/worker.js\""
+    "worker": "pnpm build:worker && node .tsbuild/src/server/worker.js",
+    "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/src/server/worker.js\""
   },
   "dependencies": {
     "dotenv": "16.4.5",
