@@ -1,10 +1,12 @@
 import type { PoolClient } from "pg";
 import { pool } from "../db";
 import type { GraphOutput } from "../graph-schema";
+import type { RepoChunk } from "../ingest";
 import {
   saveGraphNodeDetailsWithClient,
   type GraphNodeDetailInput
 } from "./graph-node-details-repo";
+import { saveRepoChunksWithClient } from "./repo-chunks-repo";
 
 type QueryClient = Pick<PoolClient, "query">;
 
@@ -25,9 +27,11 @@ export async function updateGraphStatus(graphId: string, status: string, error?:
 
 export async function saveGraphOutputWithClient(
   client: QueryClient,
+  projectId: string,
   graphId: string,
   output: GraphOutput,
-  nodeDetails: GraphNodeDetailInput[] = []
+  nodeDetails: GraphNodeDetailInput[] = [],
+  repoChunks: RepoChunk[] = []
 ) {
   await client.query(
     "UPDATE graphs SET status = $1, summary = $2, updated_at = now(), metadata = metadata || $3 WHERE id = $4",
@@ -74,17 +78,20 @@ export async function saveGraphOutputWithClient(
   }
 
   await saveGraphNodeDetailsWithClient(client, graphId, nodeDetails);
+  await saveRepoChunksWithClient(client, { projectId, graphId, chunks: repoChunks });
 }
 
 export async function saveGraphOutput(
+  projectId: string,
   graphId: string,
   output: GraphOutput,
-  nodeDetails: GraphNodeDetailInput[] = []
+  nodeDetails: GraphNodeDetailInput[] = [],
+  repoChunks: RepoChunk[] = []
 ) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await saveGraphOutputWithClient(client, graphId, output, nodeDetails);
+    await saveGraphOutputWithClient(client, projectId, graphId, output, nodeDetails, repoChunks);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

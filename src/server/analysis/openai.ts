@@ -63,6 +63,31 @@ const nodeDetailsJsonSchema = {
   }
 } as const;
 
+const ragAnswerJsonSchema = {
+  name: "rag_node_answer_v1",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["answer", "citations"],
+    properties: {
+      answer: { type: "string" },
+      citations: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["path", "reason"],
+          properties: {
+            path: { type: "string" },
+            reason: { type: "string" }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 function buildPrompt() {
   return [
     "You are an architecture analyst specializing in agentic AI systems.",
@@ -193,4 +218,64 @@ export async function analyzeGraphNodeDetails(input: {
 
   const parsed = JSON.parse(content) as { nodeDetails?: Array<Partial<NodeArchitectureDetailRecord>> };
   return normalizeNodeDetails(input.graph, parsed.nodeDetails ?? []);
+}
+
+export async function answerNodeQuestionWithRag(input: {
+  question: string;
+  node: {
+    key: string;
+    kind: string;
+    label: string;
+    data: Record<string, unknown>;
+  };
+  graphSummary: string | null;
+  incoming: Array<{ from: string; kind: string; label: string | null }>;
+  outgoing: Array<{ to: string; kind: string; label: string | null }>;
+  retrievedChunks: Array<{
+    path: string;
+    chunkIndex: number;
+    content: string;
+    score: number;
+  }>;
+}) {
+  const prompt = [
+    "You are an agentic architecture RAG assistant.",
+    "Answer using retrieved repository chunks and graph context.",
+    "Prefer grounded claims; if unsure, state uncertainty explicitly.",
+    "Output answer as concise markdown with sections:",
+    "1) Node Role, 2) Runtime Flow, 3) Internals (functions/classes), 4) Failure/Observability, 5) How It Relates To Other Nodes.",
+    "Cite only paths present in retrieved chunks."
+  ].join("\n");
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: "system", content: prompt },
+      { role: "user", content: JSON.stringify(input, null, 2) }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: ragAnswerJsonSchema
+    }
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("No RAG answer returned from OpenAI");
+  }
+
+  const parsed = JSON.parse(content) as {
+    answer?: string;
+    citations?: Array<{ path?: string; reason?: string }>;
+  };
+
+  return {
+    answer: (parsed.answer ?? "").trim(),
+    citations: (parsed.citations ?? [])
+      .map((item) => ({
+        path: (item.path ?? "").trim(),
+        reason: (item.reason ?? "").trim()
+      }))
+      .filter((item) => item.path && item.reason)
+  };
 }

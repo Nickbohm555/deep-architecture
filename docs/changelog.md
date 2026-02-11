@@ -10,3 +10,4 @@
 - Added structured `graph_node_details` persistence populated during ingest for per-node architecture internals.
 - Added inspector "Node Internals" tab with structured flow/functions/classes/dependency pointers for selected nodes.
 - Updated graph click behavior to select nodes without collapsing/changing graph view.
+- Added RAG-backed Ask AI pipeline: repo chunk indexing at ingest, retrieval during node explanation, and persisted citation context.

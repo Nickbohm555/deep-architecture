@@ -10,6 +10,7 @@ export type NodeExplanationRecord = {
   question: string | null;
   explanation: string | null;
   error: string | null;
+  context: Record<string, unknown>;
   job_id: string | null;
   created_at: string;
   updated_at: string;
@@ -30,10 +31,16 @@ async function ensureNodeExplanationSchema() {
           question TEXT,
           explanation TEXT,
           error TEXT,
+          context JSONB NOT NULL DEFAULT '{}'::jsonb,
           job_id TEXT,
           created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )`
+      );
+
+      await pool.query(
+        `ALTER TABLE node_explanations
+         ADD COLUMN IF NOT EXISTS context JSONB NOT NULL DEFAULT '{}'::jsonb`
       );
 
       await pool.query(
@@ -58,7 +65,7 @@ export async function getNodeExplanation(projectId: string, nodeKey: string) {
   await ensureNodeExplanationSchema();
   const { rows } = await pool.query<NodeExplanationRecord>(
     `SELECT ne.project_id, ne.graph_id, ne.node_key, ne.status, ne.question,
-            ne.explanation, ne.error, ne.job_id, ne.created_at, ne.updated_at
+            ne.explanation, ne.error, ne.context, ne.job_id, ne.created_at, ne.updated_at
      FROM node_explanations ne
      JOIN projects p ON p.latest_graph_id = ne.graph_id
      WHERE p.id = $1 AND ne.node_key = $2`,
@@ -113,14 +120,15 @@ export async function saveNodeExplanationText(input: {
   graphId: string;
   nodeKey: string;
   explanation: string;
+  context?: Record<string, unknown> | null;
 }) {
   await ensureNodeExplanationSchema();
-  const { graphId, nodeKey, explanation } = input;
+  const { graphId, nodeKey, explanation, context } = input;
   await pool.query(
     `UPDATE node_explanations
-     SET status = 'ready', explanation = $1, error = NULL, updated_at = now()
-     WHERE graph_id = $2 AND node_key = $3`,
-    [explanation, graphId, nodeKey]
+     SET status = 'ready', explanation = $1, error = NULL, context = $2, updated_at = now()
+     WHERE graph_id = $3 AND node_key = $4`,
+    [explanation, JSON.stringify(context ?? {}), graphId, nodeKey]
   );
 }
 
@@ -162,7 +170,10 @@ export async function getLatestGraphId(projectId: string) {
 
 export async function getGraphContext(graphId: string) {
   const [graphRes, nodesRes, edgesRes] = await Promise.all([
-    pool.query<{ summary: string | null }>("SELECT summary FROM graphs WHERE id = $1", [graphId]),
+    pool.query<{ project_id: string; summary: string | null }>(
+      "SELECT project_id, summary FROM graphs WHERE id = $1",
+      [graphId]
+    ),
     pool.query<{
       node_key: string;
       kind: string;
@@ -185,6 +196,7 @@ export async function getGraphContext(graphId: string) {
   ]);
 
   return {
+    projectId: graphRes.rows[0]?.project_id ?? "",
     summary: graphRes.rows[0]?.summary ?? null,
     nodes: nodesRes.rows,
     edges: edgesRes.rows

@@ -3,7 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { analyzeArchitectureGraph, analyzeGraphNodeDetails } from "../analysis/openai";
 import { buildFallbackNodeDetails } from "../analysis/node-details";
-import { cloneRepo, collectRepoContext, cleanupRepo } from "../ingest";
+import { cloneRepo, collectRepoChunks, collectRepoContext, cleanupRepo } from "../ingest";
 import {
   saveGraphOutput,
   updateGraphStatus,
@@ -23,6 +23,7 @@ export async function analyzeRepoJob({ repoUrl, projectId, graphId }: IngestRepo
   try {
     await cloneRepo(repoUrl, workDir);
     const { tree, importantContents } = await collectRepoContext(workDir);
+    const repoChunks = await collectRepoChunks(workDir, tree);
     const output = await analyzeArchitectureGraph({ repoUrl, tree, importantContents });
     const nodeDetails = await analyzeGraphNodeDetails({
       repoUrl,
@@ -37,7 +38,7 @@ export async function analyzeRepoJob({ repoUrl, projectId, graphId }: IngestRepo
       }));
     });
 
-    await saveGraphOutput(graphId, output, nodeDetails);
+    await saveGraphOutput(projectId, graphId, output, nodeDetails, repoChunks);
     await updateProjectLatestGraph(projectId, graphId);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

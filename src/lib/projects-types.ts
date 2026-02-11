@@ -60,6 +60,18 @@ export type NodeExplanation = {
   question: string | null;
   explanation: string | null;
   error: string | null;
+  context: {
+    retrievalQuery?: string;
+    citations?: Array<{
+      path: string;
+      reason: string;
+    }>;
+    retrieved?: Array<{
+      path: string;
+      chunkIndex: number;
+      score: number;
+    }>;
+  };
   job_id: string | null;
   created_at: string;
   updated_at: string;

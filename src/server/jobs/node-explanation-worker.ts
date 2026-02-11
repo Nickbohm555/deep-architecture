@@ -1,4 +1,5 @@
 import { explainGraphNode } from "../analysis/openai";
+import { explainNodeWithRag } from "../services/rag-agent-service";
 import {
   getGraphContext,
   saveNodeExplanationText,
@@ -30,20 +31,34 @@ export async function explainNodeJob({ graphId, nodeKey, question }: ExplainNode
       .filter((edge) => edge.source_key === nodeKey)
       .map((edge) => ({ to: edge.target_key, kind: edge.kind, label: edge.label }));
 
-    const explanation = await explainGraphNode({
-      graphSummary: context.summary,
-      node: {
-        key: node.node_key,
-        kind: node.kind,
-        label: node.label,
-        data: node.data
-      },
-      incoming,
-      outgoing,
-      question
-    });
+    const rag = await explainNodeWithRag({
+      graphId,
+      nodeKey,
+      question,
+      graphContext: context
+    }).catch(() => null);
 
-    await saveNodeExplanationText({ graphId, nodeKey, explanation });
+    const explanation =
+      rag?.explanation ??
+      (await explainGraphNode({
+        graphSummary: context.summary,
+        node: {
+          key: node.node_key,
+          kind: node.kind,
+          label: node.label,
+          data: node.data
+        },
+        incoming,
+        outgoing,
+        question
+      }));
+
+    await saveNodeExplanationText({
+      graphId,
+      nodeKey,
+      explanation,
+      context: rag?.context ?? null
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     await updateNodeExplanationStatus({ graphId, nodeKey, status: "failed", error: message });
