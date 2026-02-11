@@ -25,3 +25,5 @@ pnpm-debug.log*
 
 # build artifacts
 .tsbuild
+docs/.vitepress/cache
+docs/.vitepress/dist

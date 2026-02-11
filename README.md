@@ -240,12 +240,32 @@ pnpm worker:env
 ## Scripts
 
 - `pnpm dev` - run Next.js dev server
+- `pnpm docs:dev` - run VitePress docs on `http://localhost:3001`
+- `pnpm docs:build` - build static docs output
+- `pnpm docs:preview` - preview built docs on `http://localhost:3001`
+- `pnpm docs:guard` - fail if API/schema/workflow changed without matching docs updates
+- `pnpm docs:guard:staged` - same guard against staged files for pre-commit usage
 - `pnpm build` - production app build
 - `pnpm lint` - ESLint checks
 - `pnpm test` - Vitest suite
 - `pnpm build:worker` - compile worker TS entry
 - `pnpm worker` - compile + run worker
 - `pnpm worker:env` - run worker using `.env.local`
+
+## Docs sync enforcement
+
+- PR and main-branch checks run `.github/workflows/docs-guard.yml`.
+- Guard rules are defined in `scripts/check-doc-updates.mjs`.
+- If these code areas change, docs must change in the same PR/commit:
+  - API routes/clients -> `docs/api.md` or `docs/changelog.md`
+  - Schema/contracts -> `docs/schema.md` or `docs/changelog.md`
+  - Worker/service workflow -> `docs/workers.md` or `docs/changelog.md`
+
+To enforce this locally before commit:
+
+```bash
+pnpm docs:guard:staged
+```
 
 ## Current limitations and next improvements
 
