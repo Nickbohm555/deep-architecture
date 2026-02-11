@@ -38,7 +38,11 @@ export const graphJsonSchema = {
             key: { type: "string" },
             kind: { type: "string" },
             label: { type: "string" },
-            data: { type: "object" }
+            data: {
+              type: "object",
+              additionalProperties: false,
+              properties: {}
+            }
           }
         }
       },
@@ -53,7 +57,11 @@ export const graphJsonSchema = {
             target: { type: "string" },
             kind: { type: "string" },
             label: { type: "string" },
-            data: { type: "object" }
+            data: {
+              type: "object",
+              additionalProperties: false,
+              properties: {}
+            }
           }
         }
       }
