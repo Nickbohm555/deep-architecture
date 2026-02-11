@@ -9,15 +9,24 @@ export const OPENAI_GRAPH_SCHEMA_NAME = graphJsonSchema.name;
 
 function buildPrompt() {
   return [
-    "You are an architecture analyst.",
-    "Given a repository context, produce a JSON graph focused on runtime data flow and triggers, not feature lists.",
-    "Prioritize: inbound triggers, processing stages, storage boundaries, outbound effects.",
-    "Model nodes as major runtime actors (services, workers, queues, topics, databases, external APIs, schedulers, webhooks, modules, key entry functions).",
-    "Model edges as flow relationships with explicit direction and type (e.g., http, event, queue_publish, queue_consume, db_read, db_write, cron_trigger, webhook_trigger, stream, cache_read, cache_write).",
-    "Prefer fewer high-signal nodes over many UI/feature nodes.",
-    "If the repo has async/background processing, represent trigger paths clearly.",
-    "Return a concise summary that describes the end-to-end data flow and primary trigger paths.",
-    "Use stable node keys, e.g., service:api, queue:ingest-repo, db:postgres, function:payments.process.",
+    "You are an architecture analyst specializing in agentic AI systems.",
+    "Given a repository context, produce a JSON graph focused on runtime data flow, trigger paths, and AI agent execution loops.",
+    "Do NOT produce a feature list or UI-centric map.",
+    "Prioritize this structure:",
+    "1) inbound triggers (http/webhook/cron/queue/event),",
+    "2) gateway/router/auth/context building,",
+    "3) agent orchestration and planning,",
+    "4) model/tool execution,",
+    "5) memory/retrieval/state writes,",
+    "6) outbound actions and user-visible outputs.",
+    "Model nodes as major runtime actors only: service, worker, queue/topic, scheduler, webhook, datastore, cache, external API, model gateway, LLM callsite, prompt/template, tool executor, retrieval, memory store, guardrail/evaluator, and key entry functions.",
+    "When AI/agent logic exists, include as many of these as are present in the code: trigger, context builder, planner/router, prompt composer, model invocation, tool adapter, retrieval/memory, post-processor, guardrail/evaluator, output channel.",
+    "Model edges with explicit direction and concrete edge kinds such as: http, webhook_trigger, cron_trigger, queue_publish, queue_consume, event_emit, event_consume, prompt_build, llm_infer, tool_call, retrieval_query, memory_read, memory_write, db_read, db_write, output_emit.",
+    "Use edge labels to describe what data moves or what trigger fires (short and concrete).",
+    "Prefer fewer high-signal runtime nodes over many low-value nodes.",
+    "If async/background processing exists, show producer->queue->consumer clearly.",
+    "Return a concise summary focused on end-to-end request lifecycle and trigger-to-output flow.",
+    "Use stable node keys, e.g., service:api, queue:ingest-repo, llm:openai-chat, tool:whatsapp-client, memory:postgres.",
     "Only return JSON that matches the provided schema."
   ].join("\n");
 }
@@ -68,9 +77,10 @@ export async function explainGraphNode(input: {
   question: string;
 }) {
   const prompt = [
-    "You are an architecture explainer.",
-    "Explain the selected node in detail, then explain how data enters/leaves it and what triggers it.",
-    "Describe how this node participates in upstream/downstream flow with connected nodes.",
+    "You are an architecture explainer for agentic systems.",
+    "Explain the selected node in detail, then explain triggers, inbound data, outbound data, and failure points.",
+    "Describe how this node participates in upstream/downstream execution flow with connected nodes.",
+    "If this node is part of agentic AI, clarify its role in planning, prompting, tool use, retrieval/memory, guardrails, or output orchestration.",
     "Do not invent behavior not present in the provided graph context.",
     "Use concise, practical language with short sections and bullets."
   ].join("\n");
