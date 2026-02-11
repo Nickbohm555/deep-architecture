@@ -21,3 +21,8 @@ export async function ensureBoss() {
   await boss.start();
   started = true;
 }
+
+export async function ensureQueue(name: string) {
+  await ensureBoss();
+  await boss.createQueue(name);
+}

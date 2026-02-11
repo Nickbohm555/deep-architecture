@@ -3,7 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import OpenAI from "openai";
 import { pool } from "./db";
-import { boss } from "./boss";
+import { boss, ensureQueue } from "./boss";
 import { cloneRepo, collectRepoContext, cleanupRepo } from "./ingest";
 import { graphJsonSchema, GraphOutput } from "./graph-schema";
 
@@ -132,7 +132,7 @@ async function analyzeRepo({ repoUrl, projectId, graphId }: { repoUrl: string; p
 }
 
 async function main() {
-  await boss.start();
+  await ensureQueue("ingest-repo");
 
   await boss.work("ingest-repo", async (job) => {
     const { repoUrl, projectId, graphId } = job.data as {
@@ -143,6 +143,10 @@ async function main() {
 
     await analyzeRepo({ repoUrl, projectId, graphId });
     return { ok: true };
+  });
+
+  boss.on("error", (error) => {
+    console.error("pg-boss error", error);
   });
 
   process.on("SIGINT", async () => {

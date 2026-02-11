@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/server/db";
-import { ensureBoss, boss } from "@/server/boss";
+import { ensureQueue, boss } from "@/server/boss";
 
 export const runtime = "nodejs";
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     const graphId = graphResult.rows[0].id as string;
 
-    await ensureBoss();
+    await ensureQueue("ingest-repo");
     const jobId = await boss.send("ingest-repo", { repoUrl, projectId, graphId });
 
     await client.query(
