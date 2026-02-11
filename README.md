@@ -38,6 +38,20 @@ Set these in your shell (do not edit `.env`):
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (optional, defaults to `gpt-4.1-mini`)
 
+If you prefer to use a local env file, create `.env.local` yourself and run:
+
+```bash
+pnpm worker:env
+```
+
+Example `.env.local` contents (create this file manually):
+
+```
+DATABASE_URL=postgres://deep_arch:deep_arch@localhost:5432/deep_arch
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4.1-mini
+```
+
 ## Notes
 
 - This project uses Next.js App Router.

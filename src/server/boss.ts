@@ -6,7 +6,9 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required");
 }
 
-export const boss = new PgBoss({
+const PgBossCtor = (PgBoss as unknown as { default?: typeof PgBoss }).default ?? PgBoss;
+
+export const boss = new PgBossCtor({
   connectionString,
   schema: "pgboss"
 });
