@@ -42,6 +42,11 @@ export async function POST(req: Request) {
 
     const graphId = graphResult.rows[0].id as string;
 
+    await client.query(
+      "UPDATE projects SET latest_graph_id = $1 WHERE id = $2",
+      [graphId, projectId]
+    );
+
     await ensureQueue("ingest-repo");
     const jobId = await boss.send("ingest-repo", { repoUrl, projectId, graphId });
 
