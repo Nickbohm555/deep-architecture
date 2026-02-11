@@ -3,23 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NEXT_DIST_DIR=.next-dev next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "build:worker": "tsc -p tsconfig.worker.json",
+    "worker": "pnpm build:worker && node .tsbuild/worker.js",
+    "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/worker.js\""
   },
   "dependencies": {
-    "next": "14.2.3",
+    "dotenv": "16.4.5",
+    "next": "14.2.35",
+    "openai": "5.12.0",
+    "pg": "8.11.5",
+    "pg-boss": "12.11.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "reactflow": "11.11.4"
   },
   "devDependencies": {
     "@types/node": "20.12.12",
+    "@types/pg": "8.11.6",
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25",
+    "dotenv-cli": "7.4.2",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.2.3",
-    "typescript": "5.4.5"
+    "eslint-config-next": "14.2.35",
+    "typescript": "5.4.5",
+    "vitest": "2.1.9"
   }
 }
