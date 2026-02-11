@@ -1,4 +1,5 @@
 import { explainGraphNode } from "../analysis/openai";
+import { explainNodeWithRag } from "../services/rag-agent-service";
 import {
   getGraphContext,
   saveNodeExplanationText,
@@ -22,6 +23,13 @@ export async function explainNodeJob({ graphId, nodeKey, question }: ExplainNode
       throw new Error(`Node not found in graph: ${nodeKey}`);
     }
 
+    const ragExplanation = await explainNodeWithRag({
+      graphId,
+      nodeKey,
+      question,
+      graphContext: context
+    }).catch(() => null);
+
     const incoming = context.edges
       .filter((edge) => edge.target_key === nodeKey)
       .map((edge) => ({ from: edge.source_key, kind: edge.kind, label: edge.label }));
@@ -30,18 +38,20 @@ export async function explainNodeJob({ graphId, nodeKey, question }: ExplainNode
       .filter((edge) => edge.source_key === nodeKey)
       .map((edge) => ({ to: edge.target_key, kind: edge.kind, label: edge.label }));
 
-    const explanation = await explainGraphNode({
-      graphSummary: context.summary,
-      node: {
-        key: node.node_key,
-        kind: node.kind,
-        label: node.label,
-        data: node.data
-      },
-      incoming,
-      outgoing,
-      question
-    });
+    const explanation =
+      ragExplanation ??
+      (await explainGraphNode({
+        graphSummary: context.summary,
+        node: {
+          key: node.node_key,
+          kind: node.kind,
+          label: node.label,
+          data: node.data
+        },
+        incoming,
+        outgoing,
+        question
+      }));
 
     await saveNodeExplanationText({ graphId, nodeKey, explanation });
   } catch (error) {

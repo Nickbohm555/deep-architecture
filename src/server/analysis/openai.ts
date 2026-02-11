@@ -171,6 +171,64 @@ export async function explainGraphNode(input: {
   return content;
 }
 
+export async function explainGraphNodeWithRagAgent(input: {
+  graphSummary: string | null;
+  node: {
+    key: string;
+    kind: string;
+    label: string;
+    data: Record<string, unknown>;
+  };
+  incoming: Array<{
+    from: string;
+    kind: string;
+    label: string | null;
+  }>;
+  outgoing: Array<{
+    to: string;
+    kind: string;
+    label: string | null;
+  }>;
+  question: string;
+  evidence: Array<{
+    path: string;
+    startLine: number;
+    endLine: number;
+    symbol: string | null;
+    snippet: string;
+    score: number;
+    source: "semantic" | "keyword" | "focus";
+  }>;
+}) {
+  const prompt = [
+    "You are a RAG architecture agent for codebases.",
+    "Answer the question strictly using the provided graph context and retrieved evidence snippets.",
+    "If evidence is incomplete, state uncertainty explicitly.",
+    "Always include concise citations as [path:start-end] for concrete claims.",
+    "Do not invent files, symbols, APIs, or behavior not supported by context.",
+    "Output format:",
+    "1) Direct answer",
+    "2) Runtime flow impact",
+    "3) Risks/failure points",
+    "4) Evidence citations"
+  ].join("\n");
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: "system", content: prompt },
+      { role: "user", content: JSON.stringify(input, null, 2) }
+    ]
+  });
+
+  const content = response.choices[0]?.message?.content?.trim();
+  if (!content) {
+    throw new Error("No RAG explanation content returned from OpenAI");
+  }
+
+  return content;
+}
+
 export async function analyzeGraphNodeDetails(input: {
   repoUrl: string;
   graph: GraphOutput;

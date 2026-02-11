@@ -10,3 +10,6 @@
 - Added structured `graph_node_details` persistence populated during ingest for per-node architecture internals.
 - Added inspector "Node Internals" tab with structured flow/functions/classes/dependency pointers for selected nodes.
 - Updated graph click behavior to select nodes without collapsing/changing graph view.
+- Added RAG indexing queue and pgvector-backed chunk storage (`rag_chunks`) for repository retrieval.
+- Added hybrid retrieval service (semantic + keyword + focused source paths) for node explanations.
+- Switched explanation worker to RAG-first behavior with safe fallback to direct graph-only LLM explanation.
