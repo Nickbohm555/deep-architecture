@@ -16,13 +16,19 @@ docker compose up -d
 pnpm install
 ```
 
-3. Run the worker (repo ingest + analysis):
+3. Build the worker:
+
+```bash
+pnpm build:worker
+```
+
+4. Run the worker (repo ingest + analysis):
 
 ```bash
 pnpm worker
 ```
 
-4. Run the app:
+5. Run the app:
 
 ```bash
 pnpm dev

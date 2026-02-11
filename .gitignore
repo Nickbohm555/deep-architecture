@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # local db
 *.sqlite
+
+# build artifacts
+.tsbuild

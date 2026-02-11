@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "worker": "node --loader ts-node/esm src/server/worker.ts",
-    "worker:env": "dotenv -e .env.local -- node --loader ts-node/esm src/server/worker.ts"
+    "build:worker": "tsc -p tsconfig.worker.json",
+    "worker": "pnpm build:worker && node .tsbuild/worker.js",
+    "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/worker.js\""
   },
   "dependencies": {
     "dotenv": "16.4.5",
@@ -22,12 +23,12 @@
   },
   "devDependencies": {
     "@types/node": "20.12.12",
+    "@types/pg": "8.11.6",
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25",
     "dotenv-cli": "7.4.2",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.35",
-    "ts-node": "10.9.2",
     "typescript": "5.4.5"
   }
 }

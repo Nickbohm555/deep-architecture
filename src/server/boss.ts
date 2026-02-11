@@ -1,7 +1,4 @@
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-const { PgBoss } = require("pg-boss");
+import { PgBoss } from "pg-boss";
 
 const connectionString = process.env.DATABASE_URL;
 

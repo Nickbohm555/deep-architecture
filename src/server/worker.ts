@@ -135,7 +135,8 @@ async function main() {
   await ensureQueue("ingest-repo");
 
   await boss.work("ingest-repo", async (job) => {
-    const { repoUrl, projectId, graphId } = job.data as {
+    const jobItem = Array.isArray(job) ? job[0] : job;
+    const { repoUrl, projectId, graphId } = (jobItem?.data ?? {}) as {
       repoUrl: string;
       projectId: string;
       graphId: string;
@@ -150,7 +151,7 @@ async function main() {
   });
 
   process.on("SIGINT", async () => {
-    await boss.stop({ wait: true });
+    await boss.stop();
     process.exit(0);
   });
 }
