@@ -171,10 +171,18 @@ p {
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  gap: 12px;
 }
 
 .snapshot:last-child {
   border-bottom: none;
+}
+
+.snapshot--active {
+  background: rgba(124, 240, 193, 0.08);
+  border-radius: 12px;
+  padding: 12px;
 }
 
 .snapshot__title {

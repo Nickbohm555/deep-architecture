@@ -106,23 +106,37 @@ export default function HomePage() {
           <section className="panel">
             <h2>Snapshots</h2>
             {projectsLoading ? <p className="status">Loading projects…</p> : null}
-            {projects.map((project) => (
-              <div className="snapshot" key={project.id}>
-                <div>
-                  <p className="snapshot__title">{project.name}</p>
-                  <p className="snapshot__meta">
-                    {project.status ? `Status: ${project.status}` : "No graph yet"}
-                  </p>
-                </div>
-                <button
-                  className="button button--ghost"
-                  type="button"
-                  onClick={() => setSelectedProjectId(project.id)}
+            {projects.map((project) => {
+              const isActive = project.id === selectedProjectId;
+              return (
+                <div
+                  className={`snapshot ${isActive ? "snapshot--active" : ""}`}
+                  key={project.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedProjectId(project.id);
+                    void refreshDetail();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      setSelectedProjectId(project.id);
+                      void refreshDetail();
+                    }
+                  }}
                 >
-                  Open
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <p className="snapshot__title">{project.name}</p>
+                    <p className="snapshot__meta">
+                      {project.status ? `Status: ${project.status}` : "No graph yet"}
+                    </p>
+                  </div>
+                  <button className="button button--ghost" type="button">
+                    Open
+                  </button>
+                </div>
+              );
+            })}
           </section>
         </aside>
 
