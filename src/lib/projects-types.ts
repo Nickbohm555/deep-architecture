@@ -24,6 +24,26 @@ export type ProjectDetail = {
     label: string | null;
     data: Record<string, unknown> | null;
   }>;
+  node_details: Array<{
+    node_key: string;
+    status: string;
+    details: {
+      overview: string;
+      roleInFlow: string;
+      triggers: string[];
+      inputs: string[];
+      outputs: string[];
+      internalFlowSteps: string[];
+      keyFunctions: string[];
+      keyClasses: string[];
+      dependencies: string[];
+      failureModes: string[];
+      observability: string[];
+      sourcePointers: string[];
+    };
+    error: string | null;
+    updated_at: string;
+  }>;
 };
 
 export type IngestResponse = {

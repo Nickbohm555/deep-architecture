@@ -1,11 +1,67 @@
 import OpenAI from "openai";
 import { graphJsonSchema, type GraphOutput } from "../graph-schema";
+import { normalizeNodeDetails, type NodeArchitectureDetailRecord } from "./node-details";
 import { sanitizeGraphOutput } from "./graph-postprocess";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
 
 export const OPENAI_GRAPH_SCHEMA_NAME = graphJsonSchema.name;
+
+const nodeDetailsJsonSchema = {
+  name: "graph_node_details_v1",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["nodeDetails"],
+    properties: {
+      nodeDetails: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["nodeKey", "details"],
+          properties: {
+            nodeKey: { type: "string" },
+            details: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "overview",
+                "roleInFlow",
+                "triggers",
+                "inputs",
+                "outputs",
+                "internalFlowSteps",
+                "keyFunctions",
+                "keyClasses",
+                "dependencies",
+                "failureModes",
+                "observability",
+                "sourcePointers"
+              ],
+              properties: {
+                overview: { type: "string" },
+                roleInFlow: { type: "string" },
+                triggers: { type: "array", items: { type: "string" } },
+                inputs: { type: "array", items: { type: "string" } },
+                outputs: { type: "array", items: { type: "string" } },
+                internalFlowSteps: { type: "array", items: { type: "string" } },
+                keyFunctions: { type: "array", items: { type: "string" } },
+                keyClasses: { type: "array", items: { type: "string" } },
+                dependencies: { type: "array", items: { type: "string" } },
+                failureModes: { type: "array", items: { type: "string" } },
+                observability: { type: "array", items: { type: "string" } },
+                sourcePointers: { type: "array", items: { type: "string" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} as const;
 
 function buildPrompt() {
   return [
@@ -99,4 +155,42 @@ export async function explainGraphNode(input: {
   }
 
   return content;
+}
+
+export async function analyzeGraphNodeDetails(input: {
+  repoUrl: string;
+  graph: GraphOutput;
+  tree: string[];
+  importantContents: Record<string, string>;
+}): Promise<NodeArchitectureDetailRecord[]> {
+  const prompt = [
+    "You are an architecture analyst specializing in agentic AI systems.",
+    "Given repository context and an existing architecture graph, produce structured per-node implementation details.",
+    "Focus on how each node works internally: classes, functions, dependencies, triggers, and data flow.",
+    "Prioritize AI/agent architecture where present: planner/router, prompt construction, model invocation, tools, retrieval, memory/state, guardrails, output dispatch.",
+    "For each node, provide concise structured fields with concrete references.",
+    "Use sourcePointers for likely files/functions, as repo-relative paths or symbol-like pointers.",
+    "Do not invent entities not supported by repository context.",
+    "Return JSON that matches schema exactly."
+  ].join("\n");
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: "system", content: prompt },
+      { role: "user", content: JSON.stringify(input, null, 2) }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: nodeDetailsJsonSchema
+    }
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("No node details returned from OpenAI");
+  }
+
+  const parsed = JSON.parse(content) as { nodeDetails?: Array<Partial<NodeArchitectureDetailRecord>> };
+  return normalizeNodeDetails(input.graph, parsed.nodeDetails ?? []);
 }

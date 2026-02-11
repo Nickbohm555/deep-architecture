@@ -35,11 +35,12 @@ describe("saveGraphOutputWithClient", () => {
 
     await saveGraphOutputWithClient(client, "graph-1", createOutput());
 
-    expect(query).toHaveBeenCalledTimes(4);
+    expect(query).toHaveBeenCalledTimes(5);
     expect(query.mock.calls[0]?.[0]).toContain("UPDATE graphs SET status");
     expect(query.mock.calls[1]?.[0]).toContain("INSERT INTO graph_nodes");
     expect(query.mock.calls[2]?.[0]).toContain("DELETE FROM graph_edges");
     expect(query.mock.calls[3]?.[0]).toContain("INSERT INTO graph_edges");
+    expect(query.mock.calls[4]?.[0]).toContain("DELETE FROM graph_node_details");
   });
 
   it("still clears edges when output has none", async () => {
@@ -52,8 +53,9 @@ describe("saveGraphOutputWithClient", () => {
       edges: []
     });
 
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(3);
     expect(query.mock.calls[0]?.[0]).toContain("UPDATE graphs SET status");
     expect(query.mock.calls[1]?.[0]).toContain("DELETE FROM graph_edges");
+    expect(query.mock.calls[2]?.[0]).toContain("DELETE FROM graph_node_details");
   });
 });

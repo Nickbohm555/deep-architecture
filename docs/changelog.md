@@ -7,3 +7,6 @@
 - Refactored API routes to use shared JSON body parsing and error response helpers.
 - Kept API contracts unchanged while reducing route-level duplication.
 - Aligned API route helper imports for Vitest compatibility without changing runtime behavior.
+- Added structured `graph_node_details` persistence populated during ingest for per-node architecture internals.
+- Added inspector "Node Internals" tab with structured flow/functions/classes/dependency pointers for selected nodes.
+- Updated graph click behavior to select nodes without collapsing/changing graph view.

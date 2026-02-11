@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getProjectByIdWithLatestGraph: vi.fn(),
   getGraphNodes: vi.fn(),
   getGraphEdges: vi.fn(),
+  getGraphNodeDetails: vi.fn(),
   upsertProjectByRepoUrl: vi.fn(),
   createGraph: vi.fn(),
   setProjectLatestGraph: vi.fn(),
@@ -40,6 +41,10 @@ vi.mock("../persistence/projects-repo", () => ({
   setGraphJobId: mocks.setGraphJobId
 }));
 
+vi.mock("../persistence/graph-node-details-repo", () => ({
+  getGraphNodeDetails: mocks.getGraphNodeDetails
+}));
+
 import { enqueueIngest, getProjectDetail, listProjects } from "./projects-service";
 
 describe("projects-service", () => {
@@ -65,11 +70,13 @@ describe("projects-service", () => {
     });
     mocks.getGraphNodes.mockResolvedValue([{ node_key: "service:api" }]);
     mocks.getGraphEdges.mockResolvedValue([{ source_key: "service:api", target_key: "db:main" }]);
+    mocks.getGraphNodeDetails.mockResolvedValue([{ node_key: "service:api", status: "ready" }]);
 
     await expect(getProjectDetail("p1")).resolves.toEqual({
       project: { id: "p1", graph_id: "g1" },
       nodes: [{ node_key: "service:api" }],
-      edges: [{ source_key: "service:api", target_key: "db:main" }]
+      edges: [{ source_key: "service:api", target_key: "db:main" }],
+      node_details: [{ node_key: "service:api", status: "ready" }]
     });
   });
 

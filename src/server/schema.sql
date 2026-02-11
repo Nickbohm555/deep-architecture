@@ -92,3 +92,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS node_explanations_graph_node_idx
 
 CREATE INDEX IF NOT EXISTS node_explanations_project_node_idx
   ON node_explanations(project_id, node_key);
+
+CREATE TABLE IF NOT EXISTS graph_node_details (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  graph_id UUID NOT NULL REFERENCES graphs(id) ON DELETE CASCADE,
+  node_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ready',
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS graph_node_details_graph_node_idx
+  ON graph_node_details(graph_id, node_key);
+
+CREATE INDEX IF NOT EXISTS graph_node_details_graph_idx
+  ON graph_node_details(graph_id);

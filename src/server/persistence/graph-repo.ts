@@ -1,6 +1,10 @@
 import type { PoolClient } from "pg";
 import { pool } from "../db";
 import type { GraphOutput } from "../graph-schema";
+import {
+  saveGraphNodeDetailsWithClient,
+  type GraphNodeDetailInput
+} from "./graph-node-details-repo";
 
 type QueryClient = Pick<PoolClient, "query">;
 
@@ -22,7 +26,8 @@ export async function updateGraphStatus(graphId: string, status: string, error?:
 export async function saveGraphOutputWithClient(
   client: QueryClient,
   graphId: string,
-  output: GraphOutput
+  output: GraphOutput,
+  nodeDetails: GraphNodeDetailInput[] = []
 ) {
   await client.query(
     "UPDATE graphs SET status = $1, summary = $2, updated_at = now(), metadata = metadata || $3 WHERE id = $4",
@@ -67,13 +72,19 @@ export async function saveGraphOutputWithClient(
       edgeValues.flat()
     );
   }
+
+  await saveGraphNodeDetailsWithClient(client, graphId, nodeDetails);
 }
 
-export async function saveGraphOutput(graphId: string, output: GraphOutput) {
+export async function saveGraphOutput(
+  graphId: string,
+  output: GraphOutput,
+  nodeDetails: GraphNodeDetailInput[] = []
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await saveGraphOutputWithClient(client, graphId, output);
+    await saveGraphOutputWithClient(client, graphId, output, nodeDetails);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

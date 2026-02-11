@@ -12,6 +12,7 @@ import {
   setProjectLatestGraph,
   upsertProjectByRepoUrl
 } from "../persistence/projects-repo";
+import { getGraphNodeDetails } from "../persistence/graph-node-details-repo";
 import { getRepoName, isSupportedRepoUrl } from "./projects-service.utils";
 
 export async function listProjects() {
@@ -27,15 +28,20 @@ export async function getProjectDetail(projectId: string) {
   const graphId = project.graph_id as string | null;
 
   if (!graphId) {
-    return { project, nodes: [], edges: [] };
+    return { project, nodes: [], edges: [], node_details: [] };
   }
 
-  const [nodes, edges] = await Promise.all([getGraphNodes(graphId), getGraphEdges(graphId)]);
+  const [nodes, edges, nodeDetails] = await Promise.all([
+    getGraphNodes(graphId),
+    getGraphEdges(graphId),
+    getGraphNodeDetails(graphId)
+  ]);
 
   return {
     project,
     nodes,
-    edges
+    edges,
+    node_details: nodeDetails
   };
 }
 
