@@ -181,6 +181,11 @@ export function InspectorPanels({
             {explanationState.explanation?.question ? (
               <p className="status">Last question: {explanationState.explanation.question}</p>
             ) : null}
+            {explanationState.explanation?.context?.retrievalQuery ? (
+              <p className="status">
+                Retrieval query: {explanationState.explanation.context.retrievalQuery}
+              </p>
+            ) : null}
             {explanationState.loading ? <p className="status">Loading explanation…</p> : null}
             {explanationState.explanation?.error ? (
               <p className="status status--error">{explanationState.explanation.error}</p>
@@ -199,6 +204,19 @@ export function InspectorPanels({
                 rows={10}
               />
             </label>
+
+            {explanationState.explanation?.context?.citations?.length ? (
+              <div className="detail-section">
+                <h4>Citations</h4>
+                <ul className="detail-list">
+                  {explanationState.explanation.context.citations.map((citation) => (
+                    <li key={`${citation.path}:${citation.reason}`}>
+                      <code>{citation.path}</code>: {citation.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </>
         )}
       </section>
