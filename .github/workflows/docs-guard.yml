@@ -1,0 +1,40 @@
+name: docs-guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  enforce-doc-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Docs guard (PR diff)
+        if: github.event_name == 'pull_request'
+        run: pnpm docs:guard -- --base origin/${{ github.base_ref }}
+
+      - name: Docs guard (main push)
+        if: github.event_name == 'push'
+        run: pnpm docs:guard
+
+      - name: Build docs
+        run: pnpm docs:build

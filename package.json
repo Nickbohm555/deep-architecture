@@ -8,6 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "docs:dev": "vitepress dev docs --port 3001",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --port 3001",
+    "docs:guard": "node scripts/check-doc-updates.mjs",
+    "docs:guard:staged": "node scripts/check-doc-updates.mjs --staged",
     "build:worker": "tsc -p tsconfig.worker.json",
     "worker": "pnpm build:worker && node .tsbuild/worker.js",
     "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/worker.js\""
@@ -31,6 +36,7 @@
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.35",
     "typescript": "5.4.5",
+    "vitepress": "^1.6.4",
     "vitest": "2.1.9"
   }
 }
