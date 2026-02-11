@@ -2,25 +2,32 @@
 
 # Deep Architecture
 
-<p><strong>Runtime Intelligence For Real Codebases</strong></p>
+<p><strong>Runtime Intelligence for Real Codebases</strong></p>
+<p>Turn repository code into a living architecture graph with ingest + explain pipelines.</p>
 
 <p>
-  <a href="http://localhost:3000"><img src="https://img.shields.io/badge/app-3000-0ea5e9?style=for-the-badge&logo=vercel&logoColor=white" alt="App Port" /></a>
-  <a href="http://localhost:3001"><img src="https://img.shields.io/badge/docs-3001-14b8a6?style=for-the-badge&logo=vite&logoColor=white" alt="Docs Port" /></a>
-  <img src="https://img.shields.io/badge/status-active-22c55e?style=for-the-badge" alt="Status" />
+  <a href="http://localhost:3000"><img src="https://img.shields.io/badge/App-3000-0ea5e9?style=for-the-badge&logo=vercel&logoColor=white" alt="App Port" /></a>
+  <a href="http://localhost:3001"><img src="https://img.shields.io/badge/Docs-3001-14b8a6?style=for-the-badge&logo=vite&logoColor=white" alt="Docs Port" /></a>
+  <img src="https://img.shields.io/badge/Status-Active-22c55e?style=for-the-badge" alt="Status" />
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/next.js-14-111827?style=flat-square&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/react-18-0ea5e9?style=flat-square&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/postgres-data-0f766e?style=flat-square&logo=postgresql" alt="Postgres" />
-  <img src="https://img.shields.io/badge/pg--boss-jobs-1d4ed8?style=flat-square" alt="pg-boss" />
-  <img src="https://img.shields.io/badge/openai-analysis-7c3aed?style=flat-square&logo=openai" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/Next.js-14-111827?style=flat-square&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-18-0ea5e9?style=flat-square&logo=react" alt="React" />
+  <img src="https://img.shields.io/badge/Postgres-Data-0f766e?style=flat-square&logo=postgresql" alt="Postgres" />
+  <img src="https://img.shields.io/badge/pg--boss-Jobs-1d4ed8?style=flat-square" alt="pg-boss" />
+  <img src="https://img.shields.io/badge/OpenAI-Analysis-7c3aed?style=flat-square&logo=openai" alt="OpenAI" />
+</p>
+
+<p>
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#system-flow">System Flow</a> ·
+  <a href="#architecture-surfaces">Architecture Surfaces</a> ·
+  <a href="#command-surface">Commands</a> ·
+  <a href="#diagnostics">Diagnostics</a>
 </p>
 
 </div>
-
----
 
 ## Signal
 
@@ -31,11 +38,9 @@ Deep Architecture builds a living system map from source code, focused on:
 - Data movement
 - Queue and boundary behavior
 
-It is designed for fast architecture comprehension, not static file navigation.
+It is optimized for architecture comprehension, not static file browsing.
 
----
-
-## Instant Boot
+## Quick Start
 
 ```bash
 # 1) database
@@ -57,7 +62,19 @@ pnpm docs:dev
 - App: `http://localhost:3000`
 - Docs: `http://localhost:3001`
 
----
+## System Flow
+
+```text
+Repository URL
+   -> POST /api/projects/ingest
+   -> ingest-repo queue (pg-boss)
+   -> clone + analyze + post-process
+   -> graph persisted in Postgres
+   -> React Flow UI renders runtime map
+   -> POST /api/projects/:id/nodes/:nodekey/explain
+   -> explain-node queue
+   -> explanation persisted + displayed
+```
 
 ## Stack Matrix
 
@@ -69,8 +86,6 @@ pnpm docs:dev
 | Async | pg-boss queues + workers |
 | Intelligence | OpenAI graph + node explanation generation |
 | Knowledge Surface | VitePress docs + docs-guard CI |
-
----
 
 ## Architecture Surfaces
 
@@ -90,8 +105,6 @@ pnpm docs:dev
 - `src/server/analysis/*` - model prompts and post-processing
 - `src/server/worker.ts` - queue runtime entry
 
----
-
 ## Core Pipelines
 
 ### Ingest Pipeline
@@ -109,8 +122,6 @@ pnpm docs:dev
 3. Build node context + generate explanation
 4. Persist result (`queued -> running -> ready|failed`)
 
----
-
 ## Data Layer
 
 Schema: `src/server/schema.sql`
@@ -122,8 +133,6 @@ Primary tables:
 - `graph_nodes`
 - `graph_edges`
 - `node_explanations`
-
----
 
 ## Environment Contract
 
@@ -138,8 +147,6 @@ Optional:
 ```bash
 pnpm worker:env
 ```
-
----
 
 ## Command Surface
 
@@ -157,8 +164,6 @@ pnpm worker:env
 - `pnpm docs:guard`
 - `pnpm docs:guard:staged`
 
----
-
 ## Docs Sync Gate
 
 Workflow: `.github/workflows/docs-guard.yml`
@@ -168,8 +173,6 @@ When these areas change, docs updates are required in the same PR/commit:
 - API: `src/app/api/`, `src/lib/api/` -> `docs/api.md` or `docs/changelog.md`
 - Schema/contracts: `src/server/schema.sql`, `scripts_db_init.sql`, `src/server/graph-schema.ts`, `src/lib/projects-types.ts` -> `docs/schema.md` or `docs/changelog.md`
 - Workflow: `src/server/worker.ts`, `src/server/jobs/`, `src/server/services/`, `src/server/ingest.ts`, `src/server/boss.ts` -> `docs/workers.md` or `docs/changelog.md`
-
----
 
 ## Diagnostics
 
