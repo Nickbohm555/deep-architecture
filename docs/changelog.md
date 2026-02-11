@@ -11,3 +11,4 @@
 - Added inspector "Node Internals" tab with structured flow/functions/classes/dependency pointers for selected nodes.
 - Updated graph click behavior to select nodes without collapsing/changing graph view.
 - Added RAG-backed Ask AI pipeline: repo chunk indexing at ingest, retrieval during node explanation, and persisted citation context.
+- Refactored RAG service/worker flow for clearer stages, helper boundaries, and improved citation dedupe behavior.
