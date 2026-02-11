@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: deep_arch
+      POSTGRES_PASSWORD: deep_arch
+      POSTGRES_DB: deep_arch
+    volumes:
+      - deep_arch_pg:/var/lib/postgresql/data
+
+volumes:
+  deep_arch_pg:
