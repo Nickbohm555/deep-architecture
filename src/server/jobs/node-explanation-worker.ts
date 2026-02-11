@@ -12,6 +12,32 @@ export type ExplainNodeJobData = {
   question: string;
 };
 
+async function fallbackExplainNode(input: {
+  question: string;
+  graphSummary: string | null;
+  node: {
+    node_key: string;
+    kind: string;
+    label: string;
+    data: Record<string, unknown>;
+  };
+  incoming: Array<{ from: string; kind: string; label: string | null }>;
+  outgoing: Array<{ to: string; kind: string; label: string | null }>;
+}) {
+  return explainGraphNode({
+    graphSummary: input.graphSummary,
+    node: {
+      key: input.node.node_key,
+      kind: input.node.kind,
+      label: input.node.label,
+      data: input.node.data
+    },
+    incoming: input.incoming,
+    outgoing: input.outgoing,
+    question: input.question
+  });
+}
+
 export async function explainNodeJob({ graphId, nodeKey, question }: ExplainNodeJobData) {
   await updateNodeExplanationStatus({ graphId, nodeKey, status: "running" });
 
@@ -38,19 +64,15 @@ export async function explainNodeJob({ graphId, nodeKey, question }: ExplainNode
       graphContext: context
     }).catch(() => null);
 
+    // Prefer RAG output; fallback keeps node explain available even when retrieval/agent steps fail.
     const explanation =
       rag?.explanation ??
-      (await explainGraphNode({
+      (await fallbackExplainNode({
+        question,
         graphSummary: context.summary,
-        node: {
-          key: node.node_key,
-          kind: node.kind,
-          label: node.label,
-          data: node.data
-        },
+        node,
         incoming,
-        outgoing,
-        question
+        outgoing
       }));
 
     await saveNodeExplanationText({

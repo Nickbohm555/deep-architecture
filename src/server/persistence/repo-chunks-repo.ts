@@ -109,6 +109,10 @@ export async function searchRepoChunks(input: {
   const queryLike = `%${queryText}%`;
   const nodeLike = `%${nodeHint}%`;
 
+  // Hybrid retrieval:
+  // 1) full-text rank on chunk content
+  // 2) lightweight node-key/path bias to keep retrieval tied to selected architecture node
+  // 3) substring fallback for sparse TSQuery matches
   const { rows } = await pool.query<RepoChunkRow>(
     `SELECT
        path,

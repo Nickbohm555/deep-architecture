@@ -83,4 +83,66 @@ describe("rag-agent-service", () => {
     expect(result.context.citations[0].path).toBe("src/agent/runtime.ts");
     expect(result.context.retrievalQuery).toContain("How does this runtime work?");
   });
+
+  it("throws when selected node is missing from graph context", async () => {
+    mocks.searchRepoChunks.mockResolvedValue([]);
+    mocks.getGraphNodeDetails.mockResolvedValue([]);
+    mocks.answerNodeQuestionWithRag.mockResolvedValue({ answer: "noop", citations: [] });
+
+    await expect(
+      explainNodeWithRag({
+        graphId: "g1",
+        nodeKey: "service:missing",
+        question: "Where is this?",
+        graphContext: {
+          projectId: "p1",
+          summary: null,
+          nodes: [],
+          edges: []
+        }
+      })
+    ).rejects.toThrow("Node not found in graph: service:missing");
+  });
+
+  it("deduplicates citations by path while preserving retrieval evidence", async () => {
+    mocks.searchRepoChunks.mockResolvedValue([
+      {
+        path: "src/agent/runtime.ts",
+        chunk_index: 0,
+        language: "typescript",
+        content: "runtime",
+        score: 0.9
+      }
+    ]);
+    mocks.getGraphNodeDetails.mockResolvedValue([]);
+    mocks.answerNodeQuestionWithRag.mockResolvedValue({
+      answer: "answer",
+      citations: [
+        { path: "src/agent/runtime.ts", reason: "from model" },
+        { path: "src/agent/runtime.ts", reason: "duplicate from model" }
+      ]
+    });
+
+    const result = await explainNodeWithRag({
+      graphId: "g1",
+      nodeKey: "service:agent-runtime",
+      question: "How?",
+      graphContext: {
+        projectId: "p1",
+        summary: "s",
+        nodes: [
+          {
+            node_key: "service:agent-runtime",
+            kind: "service",
+            label: "Agent Runtime",
+            data: {}
+          }
+        ],
+        edges: []
+      }
+    });
+
+    expect(result.context.citations).toHaveLength(1);
+    expect(result.context.citations[0].path).toBe("src/agent/runtime.ts");
+  });
 });

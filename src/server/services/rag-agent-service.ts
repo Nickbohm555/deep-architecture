@@ -20,6 +20,18 @@ type GraphContext = {
   }>;
 };
 
+type RagChunk = {
+  path: string;
+  chunkIndex: number;
+  content: string;
+  score: number;
+};
+
+type Citation = {
+  path: string;
+  reason: string;
+};
+
 function buildRetrievalQuery(input: {
   question: string;
   nodeKey: string;
@@ -32,8 +44,8 @@ function buildRetrievalQuery(input: {
     .join(" ");
 }
 
-function dedupeCitations(citations: Array<{ path: string; reason: string }>) {
-  const map = new Map<string, { path: string; reason: string }>();
+function dedupeCitations(citations: Citation[]) {
+  const map = new Map<string, Citation>();
   for (const citation of citations) {
     if (!map.has(citation.path)) {
       map.set(citation.path, citation);
@@ -42,24 +54,79 @@ function dedupeCitations(citations: Array<{ path: string; reason: string }>) {
   return [...map.values()];
 }
 
+function getNodeOrThrow(context: GraphContext, nodeKey: string) {
+  const node = context.nodes.find((candidate) => candidate.node_key === nodeKey);
+  if (!node) {
+    throw new Error(`Node not found in graph: ${nodeKey}`);
+  }
+  return node;
+}
+
+function getNodeFlowContext(context: GraphContext, nodeKey: string) {
+  return {
+    incoming: context.edges
+      .filter((edge) => edge.target_key === nodeKey)
+      .map((edge) => ({ from: edge.source_key, kind: edge.kind, label: edge.label })),
+    outgoing: context.edges
+      .filter((edge) => edge.source_key === nodeKey)
+      .map((edge) => ({ to: edge.target_key, kind: edge.kind, label: edge.label }))
+  };
+}
+
+function toRagChunks(
+  chunks: Array<{
+    path: string;
+    chunk_index: number;
+    content: string;
+    score: number;
+  }>
+): RagChunk[] {
+  return chunks.map((chunk) => ({
+    path: chunk.path,
+    chunkIndex: chunk.chunk_index,
+    content: chunk.content,
+    score: Number(chunk.score) || 0
+  }));
+}
+
+function buildStoredDetailHints(detail: Awaited<ReturnType<typeof getGraphNodeDetails>>[number] | undefined) {
+  if (!detail) return "";
+
+  return [
+    "## Stored Node Internals",
+    detail.details.overview ? `- Overview: ${detail.details.overview}` : "",
+    detail.details.roleInFlow ? `- Role in flow: ${detail.details.roleInFlow}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildCitationsMarkdown(citations: Citation[]) {
+  if (citations.length === 0) return "";
+  return ["## Citations", ...citations.map((citation) => `- \`${citation.path}\`: ${citation.reason}`)].join(
+    "\n"
+  );
+}
+
+function mergeCitations(ragCitations: Citation[], chunks: RagChunk[]) {
+  return dedupeCitations([
+    ...ragCitations,
+    // Ensure we always surface top-ranked retrieval evidence, even if model omits it.
+    ...chunks.slice(0, 3).map((chunk) => ({
+      path: chunk.path,
+      reason: "Retrieved as top relevant implementation context."
+    }))
+  ]);
+}
+
 export async function explainNodeWithRag(input: {
   graphId: string;
   nodeKey: string;
   question: string;
   graphContext: GraphContext;
 }) {
-  const node = input.graphContext.nodes.find((candidate) => candidate.node_key === input.nodeKey);
-  if (!node) {
-    throw new Error(`Node not found in graph: ${input.nodeKey}`);
-  }
-
-  const incoming = input.graphContext.edges
-    .filter((edge) => edge.target_key === input.nodeKey)
-    .map((edge) => ({ from: edge.source_key, kind: edge.kind, label: edge.label }));
-
-  const outgoing = input.graphContext.edges
-    .filter((edge) => edge.source_key === input.nodeKey)
-    .map((edge) => ({ to: edge.target_key, kind: edge.kind, label: edge.label }));
+  const node = getNodeOrThrow(input.graphContext, input.nodeKey);
+  const { incoming, outgoing } = getNodeFlowContext(input.graphContext, input.nodeKey);
 
   const retrievalQuery = buildRetrievalQuery({
     question: input.question,
@@ -78,6 +145,7 @@ export async function explainNodeWithRag(input: {
     }),
     getGraphNodeDetails(input.graphId)
   ]);
+  const ragChunks = toRagChunks(chunks);
 
   const selectedNodeDetail = nodeDetails.find((detail) => detail.node_key === input.nodeKey);
 
@@ -92,40 +160,12 @@ export async function explainNodeWithRag(input: {
     graphSummary: input.graphContext.summary,
     incoming,
     outgoing,
-    retrievedChunks: chunks.map((chunk) => ({
-      path: chunk.path,
-      chunkIndex: chunk.chunk_index,
-      content: chunk.content,
-      score: Number(chunk.score) || 0
-    }))
+    retrievedChunks: ragChunks
   });
 
-  const citations = dedupeCitations([
-    ...rag.citations,
-    ...chunks.slice(0, 3).map((chunk) => ({
-      path: chunk.path,
-      reason: "Retrieved as top relevant implementation context."
-    }))
-  ]);
-
-  const detailHints = selectedNodeDetail
-    ? [
-        "## Stored Node Internals",
-        selectedNodeDetail.details.overview ? `- Overview: ${selectedNodeDetail.details.overview}` : "",
-        selectedNodeDetail.details.roleInFlow
-          ? `- Role in flow: ${selectedNodeDetail.details.roleInFlow}`
-          : ""
-      ]
-        .filter(Boolean)
-        .join("\n")
-    : "";
-
-  const citationsMarkdown =
-    citations.length > 0
-      ? ["## Citations", ...citations.map((citation) => `- \`${citation.path}\`: ${citation.reason}`)].join(
-          "\n"
-        )
-      : "";
+  const citations = mergeCitations(rag.citations, ragChunks);
+  const detailHints = buildStoredDetailHints(selectedNodeDetail);
+  const citationsMarkdown = buildCitationsMarkdown(citations);
 
   const explanation = [rag.answer, detailHints, citationsMarkdown].filter(Boolean).join("\n\n");
 
@@ -134,10 +174,10 @@ export async function explainNodeWithRag(input: {
     context: {
       retrievalQuery,
       citations,
-      retrieved: chunks.map((chunk) => ({
+      retrieved: ragChunks.map((chunk) => ({
         path: chunk.path,
-        chunkIndex: chunk.chunk_index,
-        score: Number(chunk.score) || 0
+        chunkIndex: chunk.chunkIndex,
+        score: chunk.score
       }))
     }
   };
