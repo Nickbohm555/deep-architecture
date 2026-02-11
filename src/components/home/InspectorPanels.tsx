@@ -7,6 +7,7 @@ type InspectorPanelsProps = {
   detailError: string | null;
   selectedNodeKey: string | null;
   selectedNodeLabel: string | null;
+  selectedNodeDetail: ProjectDetail["node_details"][number] | null;
   explanationState: {
     explanation: NodeExplanation | null;
     draft: string;
@@ -28,9 +29,27 @@ export function InspectorPanels({
   detailError,
   selectedNodeKey,
   selectedNodeLabel,
+  selectedNodeDetail,
   explanationState
 }: InspectorPanelsProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "explain">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "internals" | "explain">("details");
+
+  function renderList(title: string, values: string[]) {
+    return (
+      <div className="detail-section">
+        <h4>{title}</h4>
+        {values.length > 0 ? (
+          <ul className="detail-list">
+            {values.map((value) => (
+              <li key={`${title}:${value}`}>{value}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="detail-empty">Not detected.</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <aside className="inspector">
@@ -42,6 +61,13 @@ export function InspectorPanels({
             type="button"
           >
             Details
+          </button>
+          <button
+            className={`tab ${activeTab === "internals" ? "tab--active" : ""}`}
+            onClick={() => setActiveTab("internals")}
+            type="button"
+          >
+            Node Internals
           </button>
           <button
             className={`tab ${activeTab === "explain" ? "tab--active" : ""}`}
@@ -70,6 +96,46 @@ export function InspectorPanels({
             ) : (
               <p>No summary yet. Ingest a repo to generate one.</p>
             )}
+          </>
+        ) : activeTab === "internals" ? (
+          <>
+            <h2>Node Internals</h2>
+            {selectedNodeKey ? (
+              <div className="selection-block">
+                <p className="selection-label">{selectedNodeLabel ?? selectedNodeKey}</p>
+                <p className="selection-key">{selectedNodeKey}</p>
+              </div>
+            ) : (
+              <p>Select a node to inspect structured internals.</p>
+            )}
+
+            {selectedNodeDetail ? (
+              <div className="detail-grid">
+                <div className="detail-section">
+                  <h4>Overview</h4>
+                  <p>{selectedNodeDetail.details.overview || "No overview generated."}</p>
+                </div>
+                <div className="detail-section">
+                  <h4>Role In Flow</h4>
+                  <p>{selectedNodeDetail.details.roleInFlow || "No role summary generated."}</p>
+                </div>
+                {renderList("Triggers", selectedNodeDetail.details.triggers)}
+                {renderList("Inputs", selectedNodeDetail.details.inputs)}
+                {renderList("Outputs", selectedNodeDetail.details.outputs)}
+                {renderList("Internal Steps", selectedNodeDetail.details.internalFlowSteps)}
+                {renderList("Key Functions", selectedNodeDetail.details.keyFunctions)}
+                {renderList("Key Classes", selectedNodeDetail.details.keyClasses)}
+                {renderList("Dependencies", selectedNodeDetail.details.dependencies)}
+                {renderList("Failure Modes", selectedNodeDetail.details.failureModes)}
+                {renderList("Observability", selectedNodeDetail.details.observability)}
+                {renderList("Source Pointers", selectedNodeDetail.details.sourcePointers)}
+                {selectedNodeDetail.error ? (
+                  <p className="status status--error">{selectedNodeDetail.error}</p>
+                ) : null}
+              </div>
+            ) : selectedNodeKey ? (
+              <p className="status">Node internals are not available yet for this graph.</p>
+            ) : null}
           </>
         ) : (
           <>

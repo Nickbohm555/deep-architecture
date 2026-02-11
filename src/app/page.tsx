@@ -75,23 +75,13 @@ export default function HomePage() {
   }, [detail, selectedNodeKey]);
 
   const onNodeClick: NodeMouseHandler = (_event, node) => {
-    const nodeKey = node.id;
-    const hasChildren = Boolean((node.data as { hasChildren?: boolean } | undefined)?.hasChildren);
-
-    setSelectedNodeKey(nodeKey);
-
-    if (!hasChildren) return;
-
-    setCollapsedNodeKeys((current) => {
-      const next = new Set(current);
-      if (next.has(nodeKey)) {
-        next.delete(nodeKey);
-      } else {
-        next.add(nodeKey);
-      }
-      return next;
-    });
+    setSelectedNodeKey(node.id);
   };
+
+  const selectedNodeDetail = useMemo(() => {
+    if (!detail || !selectedNodeKey) return null;
+    return detail.node_details.find((candidate) => candidate.node_key === selectedNodeKey) ?? null;
+  }, [detail, selectedNodeKey]);
 
   async function handleIngest() {
     if (!repoUrl) return;
@@ -141,6 +131,7 @@ export default function HomePage() {
           detailError={detailError}
           selectedNodeKey={selectedNodeKey}
           selectedNodeLabel={selectedNodeLabel}
+          selectedNodeDetail={selectedNodeDetail}
           explanationState={explanationState}
         />
       </div>
