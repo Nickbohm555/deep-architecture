@@ -103,6 +103,50 @@ function findNodeByKeyword(nodes: GraphNode[], keyword: string) {
   });
 }
 
+function inferOrderedFlowEdges(
+  nodes: GraphNode[],
+  steps: Array<{
+    keywords: string[];
+    kind: string;
+    label: string;
+  }>
+) {
+  const resolved: Array<{ node: GraphNode; kind: string; label: string }> = [];
+
+  for (const step of steps) {
+    const match = step.keywords
+      .map((keyword) => findNodeByKeyword(nodes, keyword))
+      .find(Boolean);
+
+    if (!match) continue;
+
+    if (resolved.some((item) => item.node.key === match.key)) continue;
+
+    resolved.push({
+      node: match,
+      kind: step.kind,
+      label: step.label
+    });
+  }
+
+  const edges: GraphEdge[] = [];
+
+  for (let index = 0; index < resolved.length - 1; index += 1) {
+    const current = resolved[index];
+    const next = resolved[index + 1];
+
+    edges.push({
+      source: current.node.key,
+      target: next.node.key,
+      kind: current.kind,
+      label: current.label,
+      data: {}
+    });
+  }
+
+  return edges;
+}
+
 function inferCriticalFlowEdges(nodes: GraphNode[]) {
   const docker = findNodeByKeyword(nodes, "docker") ?? findNodeByKeyword(nodes, "compose");
   const gateway = findNodeByKeyword(nodes, "gateway") ?? findNodeByKeyword(nodes, "api");
@@ -133,6 +177,51 @@ function inferCriticalFlowEdges(nodes: GraphNode[]) {
   return edges;
 }
 
+function inferAgenticFlowEdges(nodes: GraphNode[]) {
+  return inferOrderedFlowEdges(nodes, [
+    {
+      keywords: ["webhook", "http", "trigger", "gateway", "api", "ingress"],
+      kind: "http",
+      label: "trigger"
+    },
+    {
+      keywords: ["orchestrator", "router", "planner", "agent", "workflow"],
+      kind: "flow",
+      label: "orchestrates"
+    },
+    {
+      keywords: ["prompt", "template", "context"],
+      kind: "prompt_build",
+      label: "builds prompt/context"
+    },
+    {
+      keywords: ["llm", "openai", "model", "completion", "chat"],
+      kind: "llm_infer",
+      label: "model inference"
+    },
+    {
+      keywords: ["tool", "function call", "executor", "adapter", "baileys", "whatsapp"],
+      kind: "tool_call",
+      label: "calls tool/channel"
+    },
+    {
+      keywords: ["retrieval", "vector", "knowledge", "rag", "search"],
+      kind: "retrieval_query",
+      label: "retrieves context"
+    },
+    {
+      keywords: ["memory", "state", "session", "redis", "postgres", "db", "store"],
+      kind: "memory_write",
+      label: "persists state"
+    },
+    {
+      keywords: ["output", "response", "sender", "dispatch", "emit", "outbound"],
+      kind: "output_emit",
+      label: "emits output"
+    }
+  ]);
+}
+
 function filterEdgesToKnownNodes(edges: GraphEdge[], nodeKeys: Set<string>) {
   return edges.filter((edge) => nodeKeys.has(edge.source) && nodeKeys.has(edge.target));
 }
@@ -158,6 +247,10 @@ export function sanitizeGraphOutput(input: unknown): GraphOutput {
 
   if (edges.length < Math.min(4, nodes.length - 1)) {
     edges = [...edges, ...inferCriticalFlowEdges(nodes)];
+  }
+
+  if (edges.length < Math.min(6, nodes.length - 1)) {
+    edges = [...edges, ...inferAgenticFlowEdges(nodes)];
   }
 
   edges = dedupeEdges(filterEdgesToKnownNodes(edges, nodeKeys)).slice(0, MAX_EDGES);

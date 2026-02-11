@@ -60,4 +60,34 @@ describe("sanitizeGraphOutput", () => {
     expect(edgePairs.has("channel:whatsapp-baileys->service:agent")).toBe(true);
     expect(edgePairs.has("service:agent->service:output")).toBe(true);
   });
+
+  it("infers agentic flow chain for ai architecture nodes", () => {
+    const output = sanitizeGraphOutput({
+      summary: "s",
+      nodes: [
+        { key: "service:webhook-gateway", kind: "service", label: "Webhook Gateway", data: {} },
+        { key: "service:agent-orchestrator", kind: "service", label: "Agent Orchestrator", data: {} },
+        { key: "module:prompt-builder", kind: "module", label: "Prompt Builder", data: {} },
+        { key: "llm:openai-chat", kind: "llm", label: "OpenAI Chat", data: {} },
+        { key: "tool:whatsapp-baileys", kind: "tool", label: "WhatsApp Baileys", data: {} },
+        { key: "memory:postgres", kind: "memory", label: "Postgres Memory", data: {} },
+        { key: "service:output-dispatcher", kind: "service", label: "Output Dispatcher", data: {} }
+      ],
+      edges: []
+    });
+
+    const byPair = new Map(output.edges.map((edge) => [`${edge.source}->${edge.target}`, edge]));
+
+    expect(byPair.has("service:webhook-gateway->service:agent-orchestrator")).toBe(true);
+    expect(byPair.get("service:webhook-gateway->service:agent-orchestrator")?.kind).toBe("http");
+
+    expect(byPair.has("service:agent-orchestrator->module:prompt-builder")).toBe(true);
+    expect(byPair.get("service:agent-orchestrator->module:prompt-builder")?.kind).toBe("flow");
+
+    expect(byPair.has("module:prompt-builder->llm:openai-chat")).toBe(true);
+    expect(byPair.get("module:prompt-builder->llm:openai-chat")?.kind).toBe("prompt_build");
+
+    expect(byPair.has("llm:openai-chat->tool:whatsapp-baileys")).toBe(true);
+    expect(byPair.get("llm:openai-chat->tool:whatsapp-baileys")?.kind).toBe("llm_infer");
+  });
 });
