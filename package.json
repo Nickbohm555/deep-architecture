@@ -2,6 +2,7 @@
   "name": "deep-architecture",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.29.2",
   "scripts": {
     "dev": "NEXT_DIST_DIR=.next-dev next dev",
     "build": "next build",
