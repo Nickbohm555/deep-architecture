@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NEXT_DIST_DIR=.next-dev next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "build:worker": "tsc -p tsconfig.worker.json",
     "worker": "pnpm build:worker && node .tsbuild/worker.js",
     "worker:env": "dotenv -e .env.local -- sh -c \"pnpm build:worker && node .tsbuild/worker.js\""
@@ -29,6 +30,7 @@
     "dotenv-cli": "7.4.2",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.35",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "vitest": "2.1.9"
   }
 }

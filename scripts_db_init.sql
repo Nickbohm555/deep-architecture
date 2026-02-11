@@ -75,3 +75,23 @@ CREATE TABLE IF NOT EXISTS comparisons (
 ALTER TABLE projects
   ADD CONSTRAINT projects_latest_graph_fk
   FOREIGN KEY (latest_graph_id) REFERENCES graphs(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS node_explanations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  graph_id UUID NOT NULL REFERENCES graphs(id) ON DELETE CASCADE,
+  node_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'queued',
+  question TEXT,
+  explanation TEXT,
+  error TEXT,
+  job_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS node_explanations_graph_node_idx
+  ON node_explanations(graph_id, node_key);
+
+CREATE INDEX IF NOT EXISTS node_explanations_project_node_idx
+  ON node_explanations(project_id, node_key);

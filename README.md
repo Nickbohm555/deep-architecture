@@ -63,3 +63,10 @@ OPENAI_MODEL=gpt-4.1-mini
 - This project uses Next.js App Router.
 - React Flow renders interactive graphs in the UI.
 - Postgres is provisioned via Docker Compose and auto-loads `scripts_db_init.sql`.
+
+## Server architecture
+
+- API routes live under `src/app/api/*` and only map HTTP input/output.
+- Service orchestration lives under `src/server/services/*` (validation, queueing, workflow).
+- Persistence logic lives under `src/server/persistence/*` (SQL and DB reads/writes).
+- Shared service-level errors are in `src/server/errors.ts` and map to HTTP status codes.

@@ -7,6 +7,7 @@ const execFileAsync = promisify(execFile);
 
 const MAX_FILE_BYTES = 48_000;
 const MAX_TREE_ENTRIES = 400;
+const MAX_FLOW_FILES = 48;
 
 const IMPORTANT_FILES = [
   "README.md",
@@ -35,12 +36,40 @@ const IMPORTANT_FILES = [
   "Dockerfile"
 ];
 
+const FLOW_FILE_MATCHERS = [
+  "docker",
+  "compose",
+  "gateway",
+  "whatsapp",
+  "baileys",
+  "agent",
+  "worker",
+  "queue",
+  "event",
+  "webhook",
+  "channel",
+  "message",
+  "send",
+  "outbound",
+  "inbound",
+  "handler",
+  "route",
+  "api",
+  "db",
+  "postgres",
+  "redis"
+];
+
 export async function cloneRepo(repoUrl: string, targetDir: string) {
-  await execFileAsync("git", ["clone", "--depth", "1", repoUrl, targetDir]);
+  await execFileAsync("git", ["clone", "--depth", "1", repoUrl, targetDir], {
+    maxBuffer: 32 * 1024 * 1024
+  });
 }
 
 export async function getRepoTree(repoDir: string) {
-  const { stdout } = await execFileAsync("git", ["-C", repoDir, "ls-files"]);
+  const { stdout } = await execFileAsync("git", ["-C", repoDir, "ls-files"], {
+    maxBuffer: 32 * 1024 * 1024
+  });
   const entries = stdout
     .split("\n")
     .map((line) => line.trim())
@@ -56,6 +85,15 @@ async function readFileSafe(filePath: string) {
   } catch {
     return null;
   }
+}
+
+function selectFlowFiles(tree: string[]) {
+  const matches = tree.filter((entry) => {
+    const lowered = entry.toLowerCase();
+    return FLOW_FILE_MATCHERS.some((matcher) => lowered.includes(matcher));
+  });
+
+  return matches.slice(0, MAX_FLOW_FILES);
 }
 
 export async function collectRepoContext(repoDir: string) {
@@ -75,6 +113,14 @@ export async function collectRepoContext(repoDir: string) {
     const content = await readFileSafe(path.join(repoDir, readmePath));
     if (content) {
       importantContents[readmePath] = content;
+    }
+  }
+
+  for (const file of selectFlowFiles(tree)) {
+    if (importantContents[file]) continue;
+    const content = await readFileSafe(path.join(repoDir, file));
+    if (content) {
+      importantContents[file] = content;
     }
   }
 
