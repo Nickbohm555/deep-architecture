@@ -1,4 +1,7 @@
-import PgBoss from "pg-boss";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const PgBoss = require("pg-boss");
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -6,9 +9,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required");
 }
 
-const PgBossCtor = (PgBoss as unknown as { default?: typeof PgBoss }).default ?? PgBoss;
-
-export const boss = new PgBossCtor({
+export const boss = new PgBoss({
   connectionString,
   schema: "pgboss"
 });
