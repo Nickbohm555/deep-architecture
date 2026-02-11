@@ -9,8 +9,8 @@ export type GraphEdge = {
   source: string;
   target: string;
   kind: string;
-  label?: string;
-  data?: Record<string, unknown>;
+  label: string;
+  data: Record<string, unknown>;
 };
 
 export type GraphOutput = {
@@ -51,7 +51,7 @@ export const graphJsonSchema = {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["source", "target", "kind"],
+          required: ["source", "target", "kind", "label", "data"],
           properties: {
             source: { type: "string" },
             target: { type: "string" },
