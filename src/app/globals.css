@@ -236,6 +236,34 @@ p {
   color: rgba(236, 240, 242, 0.65);
 }
 
+.canvas .react-flow__controls {
+  box-shadow: none;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(11, 17, 22, 0.82);
+}
+
+.canvas .react-flow__controls-button {
+  background: rgba(11, 17, 22, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(236, 240, 242, 0.9);
+}
+
+.canvas .react-flow__controls-button:hover {
+  background: rgba(124, 240, 193, 0.18);
+}
+
+.canvas .react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.canvas .react-flow__minimap {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .tabs {
   display: flex;
   gap: 8px;

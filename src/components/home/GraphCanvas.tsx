@@ -40,11 +40,18 @@ export function GraphCanvas({
         nodes={nodes}
         edges={edges}
         fitView
+        proOptions={{ hideAttribution: true }}
         onNodeClick={onNodeClick}
         onEdgeClick={noopEdgeClick}
       >
         <Background gap={24} color="rgba(255,255,255,0.16)" />
-        <MiniMap />
+        <MiniMap
+          className="canvas__minimap"
+          style={{ backgroundColor: "rgba(11, 17, 22, 0.88)" }}
+          maskColor="rgba(11, 17, 22, 0.55)"
+          nodeColor="rgba(124, 240, 193, 0.75)"
+          nodeStrokeColor="rgba(236, 240, 242, 0.45)"
+        />
         <Controls />
         <Panel position="top-left" className="canvas__panel">
           <div>
