@@ -1,74 +1,94 @@
+<div align="center">
+
 # Deep Architecture
 
-> Map runtime behavior, not just file trees.
-> Build a living graph of triggers, data movement, and system boundaries.
+<p><strong>Runtime Intelligence For Real Codebases</strong></p>
+
+<p>
+  <a href="http://localhost:3000"><img src="https://img.shields.io/badge/app-3000-0ea5e9?style=for-the-badge&logo=vercel&logoColor=white" alt="App Port" /></a>
+  <a href="http://localhost:3001"><img src="https://img.shields.io/badge/docs-3001-14b8a6?style=for-the-badge&logo=vite&logoColor=white" alt="Docs Port" /></a>
+  <img src="https://img.shields.io/badge/status-active-22c55e?style=for-the-badge" alt="Status" />
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/next.js-14-111827?style=flat-square&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/react-18-0ea5e9?style=flat-square&logo=react" alt="React" />
+  <img src="https://img.shields.io/badge/postgres-data-0f766e?style=flat-square&logo=postgresql" alt="Postgres" />
+  <img src="https://img.shields.io/badge/pg--boss-jobs-1d4ed8?style=flat-square" alt="pg-boss" />
+  <img src="https://img.shields.io/badge/openai-analysis-7c3aed?style=flat-square&logo=openai" alt="OpenAI" />
+</p>
+
+</div>
 
 ---
 
-## System Snapshot
+## Signal
 
-| Layer | Tech |
-|---|---|
-| Web App | Next.js 14, React 18, React Flow |
-| Data | Postgres |
-| Jobs | pg-boss |
-| Analysis | OpenAI API |
-| Docs | VitePress |
+Deep Architecture builds a living system map from source code, focused on:
+
+- Trigger paths
+- Runtime actors
+- Data movement
+- Queue and boundary behavior
+
+It is designed for fast architecture comprehension, not static file navigation.
 
 ---
 
-## Fast Launch
+## Instant Boot
 
 ```bash
-# 1) start database
+# 1) database
 docker compose up -d
 
-# 2) install dependencies
+# 2) dependencies
 pnpm install
 
-# 3) run worker (required for ingest + explanation jobs)
+# 3) worker (required for ingest/explain)
 pnpm worker
 
-# 4) run web app
+# 4) web app
 pnpm dev
 
-# 5) optional: run docs site on a separate port
+# 5) docs site (optional)
 pnpm docs:dev
 ```
-
-Endpoints:
 
 - App: `http://localhost:3000`
 - Docs: `http://localhost:3001`
 
 ---
 
-## Mission Profile
+## Stack Matrix
 
-- Ingest a GitHub repository.
-- Generate an architecture graph focused on real execution flow.
-- Navigate nodes/edges in an interactive layered canvas.
-- Ask AI for node-level explanation and persist reviewed edits.
+| Plane | Components |
+|---|---|
+| Interface | Next.js 14, React 18, React Flow |
+| Orchestration | Node services + typed route layer |
+| Persistence | Postgres + repository modules |
+| Async | pg-boss queues + workers |
+| Intelligence | OpenAI graph + node explanation generation |
+| Knowledge Surface | VitePress docs + docs-guard CI |
 
 ---
 
-## Runtime Architecture
+## Architecture Surfaces
 
-### Frontend Surface
+### Frontend
 
-- `src/app/page.tsx`: workspace orchestration.
-- `src/components/home/*`: dashboard panels and graph UI.
-- `src/lib/api/projects.ts`: typed browser API client.
-- `src/lib/graph-view.ts`: graph projection + layout logic.
+- `src/app/page.tsx` - workspace composition
+- `src/components/home/*` - panelized UI system
+- `src/lib/api/projects.ts` - typed client calls
+- `src/lib/graph-view.ts` - graph projection and layout
 
-### Backend Core
+### Backend
 
-- `src/app/api/*`: HTTP routes only.
-- `src/server/services/*`: orchestration + business validation.
-- `src/server/persistence/*`: SQL and repository layer.
-- `src/server/jobs/*`: async worker handlers.
-- `src/server/analysis/*`: prompt + graph processing.
-- `src/server/worker.ts`: queue worker bootstrapping.
+- `src/app/api/*` - HTTP contracts
+- `src/server/services/*` - orchestration + validation
+- `src/server/persistence/*` - SQL repositories
+- `src/server/jobs/*` - async handlers
+- `src/server/analysis/*` - model prompts and post-processing
+- `src/server/worker.ts` - queue runtime entry
 
 ---
 
@@ -77,23 +97,23 @@ Endpoints:
 ### Ingest Pipeline
 
 1. `POST /api/projects/ingest`
-2. Service validates repo URL and creates queued graph snapshot.
-3. Job published to `ingest-repo`.
-4. Worker clones repo, extracts context, generates graph output.
-5. Graph snapshot stored in Postgres (`queued -> running -> ready|failed`).
+2. Validate URL and create queued graph snapshot
+3. Publish `ingest-repo` job
+4. Clone + analyze repository
+5. Persist graph (`queued -> running -> ready|failed`)
 
-### Node Explain Pipeline
+### Explain Pipeline
 
 1. `POST /api/projects/:id/nodes/:nodekey/explain`
-2. Service queues explanation job (`explain-node`).
-3. Worker assembles node context and requests explanation.
-4. Status lifecycle: `queued -> running -> ready|failed`.
+2. Publish `explain-node` job
+3. Build node context + generate explanation
+4. Persist result (`queued -> running -> ready|failed`)
 
 ---
 
-## Data Plane
+## Data Layer
 
-Schema source: `src/server/schema.sql`
+Schema: `src/server/schema.sql`
 
 Primary tables:
 
@@ -105,15 +125,15 @@ Primary tables:
 
 ---
 
-## Env Contract
+## Environment Contract
 
-Required variables:
+Required:
 
 - `DATABASE_URL` (example: `postgres://deep_arch:deep_arch@localhost:5432/deep_arch`)
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (optional, default `gpt-4.1-mini`)
 
-Optional local env execution:
+Optional:
 
 ```bash
 pnpm worker:env
@@ -121,49 +141,49 @@ pnpm worker:env
 
 ---
 
-## Command Deck
+## Command Surface
 
-- `pnpm dev` - start app dev server
-- `pnpm build` - build app
-- `pnpm start` - run production app
-- `pnpm lint` - run ESLint
-- `pnpm test` - run Vitest
-- `pnpm build:worker` - compile worker
-- `pnpm worker` - compile + run worker
-- `pnpm worker:env` - run worker with `.env.local`
-- `pnpm docs:dev` - run docs on port `3001`
-- `pnpm docs:build` - build docs
-- `pnpm docs:preview` - preview docs build
-- `pnpm docs:guard` - enforce docs updates on API/schema/workflow changes
-- `pnpm docs:guard:staged` - same guard for staged files
-
----
-
-## Docs Sync Protocol
-
-Guard workflow: `.github/workflows/docs-guard.yml`
-
-When code changes in these areas, docs must be updated in the same PR/commit:
-
-- API (`src/app/api/`, `src/lib/api/`) -> update `docs/api.md` or `docs/changelog.md`
-- Schema/contracts (`src/server/schema.sql`, `scripts_db_init.sql`, `src/server/graph-schema.ts`, `src/lib/projects-types.ts`) -> update `docs/schema.md` or `docs/changelog.md`
-- Workflow (`src/server/worker.ts`, `src/server/jobs/`, `src/server/services/`, `src/server/ingest.ts`, `src/server/boss.ts`) -> update `docs/workers.md` or `docs/changelog.md`
+- `pnpm dev`
+- `pnpm build`
+- `pnpm start`
+- `pnpm lint`
+- `pnpm test`
+- `pnpm build:worker`
+- `pnpm worker`
+- `pnpm worker:env`
+- `pnpm docs:dev`
+- `pnpm docs:build`
+- `pnpm docs:preview`
+- `pnpm docs:guard`
+- `pnpm docs:guard:staged`
 
 ---
 
-## Troubleshooting
+## Docs Sync Gate
 
-### Jobs remain queued
+Workflow: `.github/workflows/docs-guard.yml`
 
-- Ensure worker is running: `pnpm worker`
-- Ensure queue names match: `ingest-repo`, `explain-node`
+When these areas change, docs updates are required in the same PR/commit:
 
-### Graph output quality is weak
+- API: `src/app/api/`, `src/lib/api/` -> `docs/api.md` or `docs/changelog.md`
+- Schema/contracts: `src/server/schema.sql`, `scripts_db_init.sql`, `src/server/graph-schema.ts`, `src/lib/projects-types.ts` -> `docs/schema.md` or `docs/changelog.md`
+- Workflow: `src/server/worker.ts`, `src/server/jobs/`, `src/server/services/`, `src/server/ingest.ts`, `src/server/boss.ts` -> `docs/workers.md` or `docs/changelog.md`
 
-- Tune prompt logic in `src/server/analysis/openai.ts`
-- Tune post-processing in `src/server/analysis/graph-postprocess.ts`
+---
 
-### Next.js build artifact issues
+## Diagnostics
+
+### Jobs stuck in queue
+
+- Run worker: `pnpm worker`
+- Verify queues: `ingest-repo`, `explain-node`
+
+### Weak graph quality
+
+- Tune prompt logic: `src/server/analysis/openai.ts`
+- Tune post-processing: `src/server/analysis/graph-postprocess.ts`
+
+### Next artifacts causing runtime weirdness
 
 ```bash
 rm -rf .next-dev .next
