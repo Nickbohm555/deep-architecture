@@ -109,3 +109,38 @@ CREATE UNIQUE INDEX IF NOT EXISTS graph_node_details_graph_node_idx
 
 CREATE INDEX IF NOT EXISTS graph_node_details_graph_idx
   ON graph_node_details(graph_id);
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS rag_chunks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  graph_id UUID NOT NULL REFERENCES graphs(id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  symbol TEXT,
+  kind TEXT NOT NULL,
+  start_line INT NOT NULL,
+  end_line INT NOT NULL,
+  content TEXT NOT NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  content_hash TEXT NOT NULL,
+  embedding vector(3072) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS rag_chunks_graph_hash_idx
+  ON rag_chunks(graph_id, content_hash);
+
+CREATE INDEX IF NOT EXISTS rag_chunks_graph_idx
+  ON rag_chunks(graph_id);
+
+CREATE INDEX IF NOT EXISTS rag_chunks_path_idx
+  ON rag_chunks(graph_id, path);
+
+CREATE INDEX IF NOT EXISTS rag_chunks_content_tsv_idx
+  ON rag_chunks USING GIN (to_tsvector('english', content));
+
+CREATE INDEX IF NOT EXISTS rag_chunks_embedding_ivfflat_idx
+  ON rag_chunks USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);

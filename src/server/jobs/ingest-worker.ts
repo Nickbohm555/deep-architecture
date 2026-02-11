@@ -2,6 +2,7 @@ import os from "os";
 import path from "path";
 import { randomUUID } from "crypto";
 import { analyzeArchitectureGraph, analyzeGraphNodeDetails } from "../analysis/openai";
+import { boss, ensureQueue } from "../boss";
 import { buildFallbackNodeDetails } from "../analysis/node-details";
 import { cloneRepo, collectRepoContext, cleanupRepo } from "../ingest";
 import {
@@ -9,6 +10,7 @@ import {
   updateGraphStatus,
   updateProjectLatestGraph
 } from "../persistence/graph-repo";
+import { QUEUE_NAMES } from "../queues";
 
 export type IngestRepoJobData = {
   repoUrl: string;
@@ -39,6 +41,9 @@ export async function analyzeRepoJob({ repoUrl, projectId, graphId }: IngestRepo
 
     await saveGraphOutput(graphId, output, nodeDetails);
     await updateProjectLatestGraph(projectId, graphId);
+
+    await ensureQueue(QUEUE_NAMES.RAG_INDEX);
+    await boss.send(QUEUE_NAMES.RAG_INDEX, { repoUrl, projectId, graphId });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     await updateGraphStatus(graphId, "failed", message);

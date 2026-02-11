@@ -5,6 +5,7 @@ import { sanitizeGraphOutput } from "./graph-postprocess";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+const RAG_EMBED_MODEL = process.env.RAG_EMBED_MODEL ?? "text-embedding-3-large";
 
 export const OPENAI_GRAPH_SCHEMA_NAME = graphJsonSchema.name;
 
@@ -110,6 +111,19 @@ export async function analyzeArchitectureGraph(input: {
   }
 
   return sanitizeGraphOutput(JSON.parse(content));
+}
+
+export async function embedTexts(input: { texts: string[] }) {
+  if (input.texts.length === 0) {
+    return [] as number[][];
+  }
+
+  const response = await openai.embeddings.create({
+    model: RAG_EMBED_MODEL,
+    input: input.texts
+  });
+
+  return response.data.map((item) => item.embedding);
 }
 
 export async function explainGraphNode(input: {
