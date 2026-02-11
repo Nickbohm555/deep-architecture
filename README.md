@@ -21,7 +21,8 @@
 
 <p>
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#system-flow">System Flow</a> ·
+  <a href="#runtime-topology">Runtime Topology</a> ·
+  <a href="#pipeline-sequence">Pipeline Sequence</a> ·
   <a href="#architecture-surfaces">Architecture Surfaces</a> ·
   <a href="#command-surface">Commands</a> ·
   <a href="#diagnostics">Diagnostics</a>
@@ -39,6 +40,14 @@ Deep Architecture builds a living system map from source code, focused on:
 - Queue and boundary behavior
 
 It is optimized for architecture comprehension, not static file browsing.
+
+## Highlights
+
+- Live architecture graph from repository ingest
+- Async queue-backed processing with dedicated worker runtime
+- Node-level explanation generation tied to graph context
+- Typed API surface and repository-based persistence layer
+- Docs guardrails to keep architecture docs synced with code
 
 ## Quick Start
 
@@ -62,18 +71,59 @@ pnpm docs:dev
 - App: `http://localhost:3000`
 - Docs: `http://localhost:3001`
 
-## System Flow
+## Runtime Topology
 
-```text
-Repository URL
-   -> POST /api/projects/ingest
-   -> ingest-repo queue (pg-boss)
-   -> clone + analyze + post-process
-   -> graph persisted in Postgres
-   -> React Flow UI renders runtime map
-   -> POST /api/projects/:id/nodes/:nodekey/explain
-   -> explain-node queue
-   -> explanation persisted + displayed
+```mermaid
+flowchart LR
+  U[User] --> UI[Next.js App<br/>React Flow UI]
+  UI --> API[Route Layer<br/>src/app/api/*]
+  API --> SVC[Services<br/>src/server/services/*]
+  SVC --> Q[(pg-boss Queues)]
+  SVC --> DB[(Postgres)]
+  W[Worker<br/>src/server/worker.ts] --> Q
+  W --> A[Analysis Engine<br/>src/server/analysis/*]
+  A --> DB
+  SVC --> DB
+  DB --> UI
+```
+
+## Pipeline Sequence
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant R as API Route
+  participant S as Service
+  participant Q as pg-boss
+  participant W as Worker
+  participant A as Analysis
+  participant D as Postgres
+
+  C->>R: POST /api/projects/ingest
+  R->>S: Validate + enqueue
+  S->>D: create graph snapshot (queued)
+  S->>Q: publish ingest-repo
+  Q->>W: deliver job
+  W->>A: clone + analyze + post-process
+  A->>D: persist graph + status
+
+  C->>R: POST /api/projects/:id/nodes/:nodekey/explain
+  R->>S: enqueue explanation
+  S->>Q: publish explain-node
+  Q->>W: deliver job
+  W->>A: build node context + generate explanation
+  A->>D: persist explanation + status
+```
+
+## Job State Lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> queued
+  queued --> running
+  running --> ready
+  running --> failed
+  failed --> queued: retry/requeue
 ```
 
 ## Stack Matrix
@@ -122,6 +172,13 @@ Repository URL
 3. Build node context + generate explanation
 4. Persist result (`queued -> running -> ready|failed`)
 
+## Execution Map
+
+| Flow | Trigger | Queue | Worker Entry | Persistence |
+|---|---|---|---|---|
+| Ingest | `POST /api/projects/ingest` | `ingest-repo` | `src/server/jobs/ingest-worker.ts` | `graphs`, `graph_nodes`, `graph_edges` |
+| Explain | `POST /api/projects/:id/nodes/:nodekey/explain` | `explain-node` | `src/server/jobs/node-explanation-worker.ts` | `node_explanations` |
+
 ## Data Layer
 
 Schema: `src/server/schema.sql`
@@ -163,6 +220,19 @@ pnpm worker:env
 - `pnpm docs:preview`
 - `pnpm docs:guard`
 - `pnpm docs:guard:staged`
+
+### Recommended Dev Loop
+
+```bash
+# terminal 1
+pnpm worker
+
+# terminal 2
+pnpm dev
+
+# terminal 3 (optional docs)
+pnpm docs:dev
+```
 
 ## Docs Sync Gate
 
